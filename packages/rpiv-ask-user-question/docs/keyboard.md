@@ -17,6 +17,10 @@ adapts to the size of your terminal.
 | `Ctrl+G` | Open Pi's configured external editor with the current custom-answer draft. | `Type something.` input |
 | `Ctrl+U` | Clear the current custom-answer draft. | `Type something.` input |
 | `Ctrl+]` | Collapse or expand the dialog. Configurable via `collapseKey`. | Everywhere, including while collapsed |
+| `PgUp` / `PgDn`, mouse wheel | Read the chat above the questions. The dialog shrinks to one row while answers and drafts stay intact. | Pi fullscreen hosts exposing viewport scrolling |
+
+While reading the chat, the first non-scroll key restores the questionnaire and is consumed.
+Confirm or cancel only after the full dialog is visible again. This also works when `collapseKey` is disabled.
 
 The table names the default keys; the dialog actually follows your Pi keybindings.
 Confirm listens to both `tui.select.confirm` and `tui.input.submit`, and a key bound to

@@ -67,6 +67,7 @@ const keybindings = {
 };
 
 interface SessionTestOptions {
+	tui?: TUI;
 	params?: QuestionParams;
 	itemsByTab?: WrappingSelectItem[][];
 	editInput?: (value: string) => Promise<string | undefined>;
@@ -77,7 +78,7 @@ function makeSession(options: SessionTestOptions = {}) {
 	const sessionParams = options.params ?? params;
 	const done = vi.fn<(result: QuestionnaireResult) => void>();
 	const session = new QuestionnaireSession({
-		tui: { terminal: { columns: 120, rows: 40 }, requestRender: vi.fn() } as unknown as TUI,
+		tui: options.tui ?? ({ terminal: { columns: 120, rows: 40 }, requestRender: vi.fn() } as unknown as TUI),
 		theme: makeTheme() as unknown as Theme,
 		params: sessionParams,
 		itemsByTab: options.itemsByTab ?? itemsFor(sessionParams),
@@ -310,5 +311,26 @@ describe("QuestionnaireSession — collapsed row with collapseKey 'off'", () => 
 		expect(collapsed[0]).toContain("Esc to cancel");
 		expect(collapsed[0]).not.toContain("to expand");
 		expect(collapsed[0]).not.toContain("Off");
+	});
+});
+
+describe("QuestionnaireSession — reading transcript", () => {
+	it("preserves a custom draft and does not submit until the full questionnaire is restored", () => {
+		const scrollBy = vi.fn();
+		const tui = { terminal: { columns: 120, rows: 40 }, scrollBy, requestRender: vi.fn() } as unknown as TUI;
+		const { session, done } = makeSession({ tui });
+		focusCustomAnswer(session);
+		session.dispatch("pointer observação");
+		session.dispatch("\x1b[5~");
+		expect(scrollBy).toHaveBeenCalledWith(-36);
+		expect(session.component.render(120)).toHaveLength(1);
+		session.dispatch(ENTER);
+		expect(done).not.toHaveBeenCalled();
+		expect(session.component.render(120).join("\n")).toContain("pointer observação");
+		session.dispatch(ENTER);
+		expect(done).toHaveBeenCalledWith({
+			answers: [expect.objectContaining({ kind: "custom", answer: "pointer observação" })],
+			cancelled: false,
+		});
 	});
 });

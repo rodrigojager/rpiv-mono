@@ -1,5 +1,5 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
-import type { Editor, OverlayHandle, TUI } from "@earendil-works/pi-tui";
+import { type Editor, type OverlayHandle, type TUI, truncateToWidth } from "@earendil-works/pi-tui";
 import { COLLAPSE_KEY_OFF, formatKeySpecForDisplay } from "../config.js";
 import type { QuestionData, QuestionnaireResult, QuestionParams } from "../tool/types.js";
 import type { WrappingSelectItem } from "../view/components/wrapping-select.js";
@@ -10,6 +10,7 @@ import { t } from "./i18n-bridge.js";
 import { type QuestionnaireAction, routeKey } from "./key-router.js";
 import type { QuestionnaireRuntime, QuestionnaireState } from "./state.js";
 import { type ApplyContext, type Effect, reduce } from "./state-reducer.js";
+import { TranscriptReview } from "./transcript-review.js";
 
 export interface QuestionnaireSessionConfig {
 	tui: TUI;
@@ -75,6 +76,7 @@ export class QuestionnaireSession {
 	private readonly collapseKey: string;
 	private readonly canReopenWhileHidden: boolean;
 	private inputEditorOpen = false;
+	private readonly transcriptReview: TranscriptReview;
 
 	/**
 	 * Overlay handle captured by `ctx.ui.custom`'s `onHandle` callback. Lets the session
@@ -94,6 +96,7 @@ export class QuestionnaireSession {
 		this.isMulti = this.questions.length > 1;
 		this.itemsByTab = config.itemsByTab;
 		this.keybindings = config.keybindings;
+		this.transcriptReview = new TranscriptReview(config.tui, config.keybindings);
 		this.editInput = config.editInput;
 		this.collapseKey = config.collapseKey;
 		this.canReopenWhileHidden = config.canReopenWhileHidden;
@@ -120,7 +123,23 @@ export class QuestionnaireSession {
 	private assembleComponent(built: QuestionnaireBuilt, theme: Theme): QuestionnaireSessionComponent {
 		const collapsedRender = this.buildCollapsedRender(theme);
 		return {
-			render: (width) => (this.state.collapsed ? collapsedRender(width) : built.render(width)),
+			render: (width) => {
+				if (this.transcriptReview.active)
+					return [
+						truncateToWidth(
+							theme.fg(
+								"dim",
+								t(
+									"hint.transcript_review",
+									"Reading chat · PgUp/PgDn or mouse wheel · press a key to return to questions",
+								),
+							),
+							width,
+							"…",
+						),
+					];
+				return this.state.collapsed ? collapsedRender(width) : built.render(width);
+			},
 			invalidate: built.invalidate,
 			handleInput: (data) => this.dispatch(data),
 		};
@@ -149,6 +168,7 @@ export class QuestionnaireSession {
 
 	dispatch(data: string): void {
 		if (this.inputEditorOpen) return;
+		if (this.transcriptReview.handleInput(data)) return;
 		const action = routeKey(data, this.state, this.runtime());
 		if (action.kind === "ignore") {
 			this.handleIgnoreInline(data);

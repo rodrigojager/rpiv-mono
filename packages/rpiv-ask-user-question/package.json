@@ -16,7 +16,7 @@
 	"author": "juicesharp",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/juicesharp/rpiv-mono.git",
+		"url": "git+https://github.com/rodrigojager/rpiv-mono.git",
 		"directory": "packages/rpiv-ask-user-question"
 	},
 	"homepage": "https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-ask-user-question#readme",
@@ -55,6 +55,7 @@
 		"state/selectors/projections.ts",
 		"state/state-reducer.ts",
 		"state/state.ts",
+		"state/transcript-review.ts",
 		"tool/format-answer.ts",
 		"tool/normalize-params.ts",
 		"tool/response-envelope.ts",

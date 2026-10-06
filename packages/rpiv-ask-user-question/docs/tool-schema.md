@@ -10,7 +10,7 @@ ask_user_question({
   questions: [
     {
       question: string,            // full question text, ends with "?"
-      header: string,              // chip label, max 16 chars
+      header: string,              // chip label; longer text is shortened to 16 display columns
       options: [
         {
           label: string,           // 1-5 words, max 60 chars
@@ -31,13 +31,14 @@ ask_user_question({
 | Field | Constraint | Enforced by |
 | --- | --- | --- |
 | `questions` | 1-4 entries | TypeBox schema + `validateQuestionnaire` |
-| `questions[].header` | max 16 characters | TypeBox schema only |
+| `questions[].header` | shortened to 16 display columns | runtime normalization before rendering |
 | `questions[].options` | 2-4 entries | TypeBox schema (both bounds) + `validateQuestionnaire` (minimum only) |
 | `options[].label` | max 60 characters | TypeBox schema only |
 | `options[].preview` | single-select questions only | tool description (multi-select tabs render checkbox rows) |
 
-The two `maxLength` limits are checked by the parameter schema before `execute` runs;
-the runtime validator does not re-check them.
+The option-label `maxLength` is checked by the parameter schema before `execute` runs.
+An overlong question header is accepted, then shortened in `execute`; the complete
+question text remains available to the user and the model.
 
 ### Reserved option labels
 

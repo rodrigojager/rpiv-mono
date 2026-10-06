@@ -60,8 +60,7 @@ export const QuestionSchema = Type.Object({
 			'The complete question to ask the user. Should be clear, specific, and end with a question mark. Example: "Which library should we use for date formatting?" If multiSelect is true, phrase it accordingly, e.g. "Which features do you want to enable?"',
 	}),
 	header: Type.String({
-		maxLength: MAX_HEADER_LENGTH,
-		description: `MAX ${MAX_HEADER_LENGTH} CHARACTERS — hard limit, requests over the limit are rejected. Very short chip/tag shown next to the question. Examples: "Auth method", "Library", "Approach".`,
+		description: `Keep this short (about ${MAX_HEADER_LENGTH} display columns). Longer headers are shortened for the UI; the full question is preserved. Examples: "Auth method", "Library", "Approach".`,
 	}),
 	options: Type.Array(OptionSchema, {
 		minItems: MIN_OPTIONS,

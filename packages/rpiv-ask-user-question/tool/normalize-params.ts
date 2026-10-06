@@ -1,4 +1,5 @@
-import type { QuestionParams } from "./types.js";
+import { visibleWidth } from "@earendil-works/pi-tui";
+import { MAX_HEADER_LENGTH, type QuestionParams } from "./types.js";
 
 /**
  * Normalize line terminators in one model-supplied text field (#192).
@@ -19,6 +20,24 @@ import type { QuestionParams } from "./types.js";
  */
 export function normalizeLineTerminators(text: string): string {
 	return text.replace(/\r\n/g, "\n").replace(/\r/g, "");
+}
+
+/** Keep model-authored tab labels within the UI budget without rejecting the question. */
+export function normalizeHeader(text: string): string {
+	const header = normalizeLineTerminators(text).replace(/\s+/gu, " ").trim();
+	if (visibleWidth(header) <= MAX_HEADER_LENGTH) return header;
+
+	const ellipsis = "…";
+	const budget = MAX_HEADER_LENGTH - visibleWidth(ellipsis);
+	let prefix = "";
+	let width = 0;
+	for (const { segment } of new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(header)) {
+		const segmentWidth = visibleWidth(segment);
+		if (width + segmentWidth > budget) break;
+		prefix += segment;
+		width += segmentWidth;
+	}
+	return prefix.trimEnd() + ellipsis;
 }
 
 /**
@@ -49,7 +68,8 @@ export function normalizeQuestionParams(params: QuestionParams): QuestionParams 
 	return {
 		...params,
 		questions: params.questions.map((q) => ({
-			...normalizeStringFields(q, ["question", "header"]),
+			...normalizeStringFields(q, ["question"]),
+			...(typeof q.header === "string" ? { header: normalizeHeader(q.header) } : {}),
 			options: q.options.map((o) => normalizeStringFields(o, ["label", "description", "preview"])),
 		})),
 	};

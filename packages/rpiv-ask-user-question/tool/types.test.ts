@@ -120,9 +120,8 @@ describe("QuestionSchema — option/preview/multiSelect/header shape", () => {
 		expect(Value.Check(QuestionsSchema, [noHeader])).toBe(false);
 	});
 
-	it("rejects a header longer than MAX_HEADER_LENGTH chars", () => {
-		const tooLong = "x".repeat(MAX_HEADER_LENGTH + 1);
-		expect(Value.Check(QuestionsSchema, [makeQuestion({ header: tooLong })])).toBe(false);
+	it("accepts a long header so execute can shorten it before rendering", () => {
+		expect(Value.Check(QuestionsSchema, [makeQuestion({ header: "Pacote SpyBrowser" })])).toBe(true);
 	});
 
 	it("rejects a label longer than MAX_LABEL_LENGTH (60) chars", () => {

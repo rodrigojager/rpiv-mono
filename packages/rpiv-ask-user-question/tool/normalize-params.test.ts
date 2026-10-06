@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeLineTerminators, normalizeQuestionParams } from "./normalize-params.js";
+import { normalizeHeader, normalizeLineTerminators, normalizeQuestionParams } from "./normalize-params.js";
 import type { QuestionParams } from "./types.js";
 
 describe("normalizeLineTerminators", () => {
@@ -52,6 +52,20 @@ describe("normalizeQuestionParams", () => {
 				},
 			],
 		});
+	});
+
+	it("shortens an overlong header without changing the full question", () => {
+		const question = "Como devemos entregar a integração SpyBrowser no GitHub?";
+		const out = normalizeQuestionParams({
+			questions: [{ question, header: "Pacote SpyBrowser", options: [{ label: "A", description: "a" }, { label: "B", description: "b" }] }],
+		});
+		expect(out.questions[0].header).toBe("Pacote SpyBrows…");
+		expect(out.questions[0].question).toBe(question);
+		expect(out.questions[0].header).not.toMatch(/\x1b/u);
+	});
+
+	it("keeps wide graphemes intact within the header display budget", () => {
+		expect(normalizeHeader("Pacote 📦 SpyBrowser com detalhes")).toBe("Pacote 📦 SpyBr…");
 	});
 
 	it("does not mutate the input", () => {
